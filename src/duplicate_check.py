@@ -49,7 +49,7 @@ def check_duplicate(file_path):
 
         cursor = connection.cursor()
 
-        # Step 4: Search for existing file hash
+        # Step 4: Check whether the file already exists
         query = """
         SELECT file_id
         FROM stored_files
@@ -59,7 +59,21 @@ def check_duplicate(file_path):
         cursor.execute(query, (file_hash,))
         result = cursor.fetchone()
 
-        # Step 5: Identify duplicate or new file
+        # Step 5: Record every upload attempt
+        history_query = """
+        INSERT INTO backup_records
+        (uploaded_name, file_hash, file_size)
+        VALUES (%s, %s, %s)
+        """
+
+        cursor.execute(
+            history_query,
+            (file_name, file_hash, file_size)
+        )
+
+        history_id = cursor.lastrowid
+
+        # Step 6: Identify duplicate or new file
         if result:
 
             print("\nDUPLICATE FILE DETECTED!")
@@ -68,7 +82,7 @@ def check_duplicate(file_path):
 
         else:
 
-            # Step 6: Store new file information
+            # Step 7: Store new file information
             insert_query = """
             INSERT INTO stored_files
             (file_hash, original_name, file_size, storage_path)
@@ -80,15 +94,22 @@ def check_duplicate(file_path):
                 (file_hash, file_name, file_size, file_path)
             )
 
-            connection.commit()
-
             print("\nNEW FILE DETECTED!")
             print("File information saved successfully.")
             print("New File ID:", cursor.lastrowid)
 
-    except mysql.connector.Error as error:
+        # Step 8: Save database changes
+        connection.commit()
 
-        print("Database error:", error)
+        print("\nBackup attempt recorded successfully!")
+        print("Backup History ID:", history_id)
+
+    except Exception as error:
+
+        if connection and connection.is_connected():
+            connection.rollback()
+
+        print("Error:", error)
 
     finally:
 
@@ -99,7 +120,7 @@ def check_duplicate(file_path):
             connection.close()
 
 
-# Step 7: Main program
+# Step 9: Main program
 if __name__ == "__main__":
 
     path = input("Enter file path: ").strip().strip('"').strip("'")
