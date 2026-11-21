@@ -44,6 +44,8 @@ This allows the system to distinguish between unique files and duplicate upload 
 
 - SHA-256 File Hashing: Generates file hashes using Python's `hashlib` library.
 - Duplicate File Detection: Identifies identical file contents even when filenames differ.
+- Web Dashboard: Upload files, search the unique-file inventory, and review duplicate upload history.
+- Local File Storage: Keeps the first uploaded copy in the server's `storage/` directory; matching uploads are recorded without storing another copy.
 - MySQL Integration: Connects Python with MySQL to store and retrieve file records.
 - Unique File Management: Uses a unique constraint on file hashes to prevent duplicate metadata records.
 - Backup History Tracking: Records every upload attempt, including duplicate files.
@@ -157,7 +159,13 @@ DedupVault/
 │   ├── file_hash.py
 │   └── duplicate_check.py
 │
+├── templates/
+│   └── index.html
+├── static/
+│   ├── app.js
+│   └── styles.css
 ├── app.py
+├── web_app.py
 ├── test_connection.py
 ├── requirements.txt
 ├── .env
@@ -212,11 +220,21 @@ Step 6: Test the Database Connection
 
 python test_connection.py
 
-Step 7: Run DedupVault
+Step 7: Run the web dashboard
 
+```bash
+python web_app.py
+```
+
+Open `http://127.0.0.1:5000` in your browser. The dashboard reads its file inventory and upload history from MySQL. The first upload of a file is stored in the local `storage/` directory; an upload with matching SHA-256 content is recorded as a duplicate and is not stored again. Uploads are limited to 512 MB per file.
+
+To use the original command-line interface instead:
+
+```bash
 python app.py
+```
 
-The application displays a menu:
+The command-line application displays a menu:
 
 text
 =============================================
@@ -295,19 +313,15 @@ Here is your properly spaced Markdown table. Copy and paste it directly into you
 | Backup history integration           | Completed          |
 | Menu-driven application              | Completed          |
 | Basic new-file and duplicate testing | Completed          |
-| Physical file storage management     | Future Enhancement |
-| Storage space savings calculation    | Future Enhancement |
-| Web-based user interface             | Future Enhancement |
+| Physical file storage management      | Completed          |
+| Duplicate bytes prevented calculation | Completed          |
+| Web-based user interface              | Completed          |
 | File restoration and recovery        | Future Enhancement |
 
 12. Future Enhancements
 
 Future improvements may include:
 
-- Developing a web-based dashboard.
-- Adding a graphical file upload interface.
-- Implementing centralized physical file storage.
-- Calculating actual storage space savings.
 - Adding automated backup management.
 - Implementing file restoration and recovery.
 - Providing detailed storage analytics and reports.

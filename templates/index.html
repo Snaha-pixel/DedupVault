@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0c1018">
+    <title>DedupVault — Duplicate detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="DedupVault home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 7.5 12 4l7 3.5v9L12 20l-7-3.5v-9Z" stroke="currentColor" stroke-width="1.7"/><path d="m8.5 9.2 7 5.6m0-5.6-7 5.6" stroke="currentColor" stroke-width="1.7"/></svg>
+          </span>
+          <span>Dedup<span class="brand-accent">Vault</span></span>
+        </a>
+        <div class="topbar-status"><span class="status-dot"></span><span id="connection-label">Connecting to your vault</span></div>
+        <div class="topbar-right">
+          <span class="environment-label">APP MODE<br><strong>Local + MySQL</strong></span>
+          <span class="avatar" aria-hidden="true">DV</span>
+        </div>
+      </header>
+
+      <aside class="sidebar">
+        <p class="eyebrow sidebar-label">YOUR WORKSPACE</p>
+        <nav class="navigation" aria-label="Workspace navigation">
+          <a class="nav-item active" href="#overview" data-view="all">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.7"/></svg>
+            Overview
+          </a>
+          <a class="nav-item" href="#inventory" data-view="duplicates">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="m16 15 1.5 1.5L20 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Duplicate uploads
+          </a>
+          <a class="nav-item" href="#inventory" data-view="recent">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Upload activity
+          </a>
+        </nav>
+        <div class="sidebar-note">
+          <div class="note-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.9 7.5-7 10-4.1-2.5-7-5.5-7-10V6l7-3Z" stroke="currentColor" stroke-width="1.6"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <strong>Your files stay yours</strong>
+          <p>Files are stored on this server. Matching uploads are detected by SHA-256 and aren't stored twice.</p>
+        </div>
+        <div class="sidebar-footer"><span class="status-dot"></span> Local vault <span class="footer-version">v1.0</span></div>
+      </aside>
+
+      <main id="overview" class="main-content">
+        <div id="error-banner" class="error-banner" role="alert" hidden></div>
+        <section class="page-heading">
+          <div>
+            <p class="eyebrow">FILE INTELLIGENCE</p>
+            <h1>Your storage, <span>in focus.</span></h1>
+            <p class="page-description">Find duplicate content and keep your file library organized.</p>
+          </div>
+          <button class="button button-primary" id="upload-trigger" type="button">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Upload files
+          </button>
+          <input id="file-input" type="file" multiple hidden>
+        </section>
+
+        <section class="stats-grid" aria-label="Storage overview">
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">UNIQUE FILES</span><span class="stat-icon cyan">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 3.8h7l4 4V20H7a2 2 0 0 1-2-2V5.8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6"/><path d="M14 4v4h4M8 13h8m-8 3h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span></div>
+            <div class="stat-value" id="stat-files">—</div>
+            <p class="stat-caption">Unique files stored in your vault</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">VAULT SIZE</span><span class="stat-icon violet">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><ellipse cx="12" cy="6" rx="7.5" ry="3" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6m-15 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span></div>
+            <div class="stat-value" id="stat-storage">—</div>
+            <p class="stat-caption">Space used by unique stored content</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">DUPLICATES CAUGHT</span><span class="stat-icon green">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 8V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-3M5 8h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6"/><path d="M7 13h5m-5 3h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span></div>
+            <div class="stat-value" id="stat-duplicates">—</div>
+            <p class="stat-caption">Repeat uploads identified by content</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">UPLOADS PREVENTED</span><span class="stat-icon amber">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18m-5-5 5 5 5-5M5 8l7-5 7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span></div>
+            <div class="stat-value" id="stat-prevented">—</div>
+            <p class="stat-caption">Duplicate bytes not stored again</p>
+          </article>
+        </section>
+
+        <section class="upload-panel" id="drop-zone" aria-label="Upload files">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="upload-copy">
+            <strong>Drop files to check for duplicates</strong>
+            <span>SHA-256 matching · Up to 512 MB per file</span>
+          </div>
+          <button class="button button-secondary" id="browse-trigger" type="button">Browse files</button>
+          <div class="upload-progress" id="upload-progress" hidden>
+            <span class="spinner" aria-hidden="true"></span><span id="upload-status">Checking files…</span>
+          </div>
+        </section>
+
+        <section class="inventory-section" id="inventory">
+          <div class="inventory-heading">
+            <div>
+              <p class="eyebrow">YOUR LIBRARY</p>
+              <h2 id="inventory-title">Stored files</h2>
+            </div>
+            <label class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              <input id="search-input" type="search" placeholder="Search files…" autocomplete="off">
+            </label>
+          </div>
+          <div class="filter-tabs" role="tablist" aria-label="Filter library">
+            <button class="filter-tab active" type="button" role="tab" aria-selected="true" data-filter="all">All files <span id="all-count">0</span></button>
+            <button class="filter-tab" type="button" role="tab" aria-selected="false" data-filter="duplicates">With duplicates <span id="duplicates-count">0</span></button>
+            <button class="filter-tab" type="button" role="tab" aria-selected="false" data-filter="recent">Recent uploads</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr id="table-head">
+                <th scope="col">FILE</th><th scope="col">SIZE</th><th scope="col">UPLOADS</th><th scope="col">ADDED</th>
+              </tr></thead>
+              <tbody id="file-list">
+                <tr><td colspan="4" class="empty-state">Loading your library…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="results-label">—</span><span>Files stay on your server</span></div>
+        </section>
+        <footer class="main-footer"><span>DedupVault <span class="footer-separator">/</span> Store smarter. Detect duplicates.</span><span>SHA-256 verified</span></footer>
+      </main>
+    </div>
+    <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+  </body>
+</html>

@@ -62,13 +62,13 @@ def check_duplicate(file_path):
         # Step 5: Record every upload attempt
         history_query = """
         INSERT INTO backup_records
-        (uploaded_name, file_hash, file_size)
-        VALUES (%s, %s, %s)
+        (uploaded_name, file_hash, file_size, backup_path)
+        VALUES (%s, %s, %s, %s)
         """
 
         cursor.execute(
             history_query,
-            (file_name, file_hash, file_size)
+            (file_name, file_hash, file_size, file_path)
         )
 
         history_id = cursor.lastrowid
